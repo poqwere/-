@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARKANOID - 벽돌깨기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a0b2e 50%, #16003b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        /* CRT 스캔라인 효과 */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%,
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .game-container {
+            background: rgba(15, 15, 35, 0.9);
+            border: 4px solid #00ff9f;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 40px rgba(0, 255, 159, 0.6),
+                        inset 0 0 30px rgba(0, 0, 0, 0.7);
+            position: relative;
+            z-index: 2;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            font-size: 56px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ff9f, #00b8ff, #ff00ff, #00ff9f);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 159, 0.8);
+            letter-spacing: 12px;
+            margin-bottom: 5px;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .game-subtitle {
+            font-size: 14px;
+            color: #00b8ff;
+            text-shadow: 0 0 10px #00b8ff;
+            letter-spacing: 4px;
+        }
+
+        .game-content {
+            display: flex;
+            gap: 25px;
+        }
+
+        .game-board-container {
+            position: relative;
+        }
+
+        #gameCanvas {
+            border: 3px solid #ff00ff;
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.6),
+                        inset 0 0 15px rgba(0, 0, 0, 0.9);
+            background: #000;
+            image-rendering: pixelated;
+            border-radius: 5px;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 220px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 255, 159, 0.1) 0%, rgba(0, 184, 255, 0.1) 100%);
+            border: 2px solid #00ff9f;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0, 255, 159, 0.4),
+                        inset 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .info-title {
+            color: #00ff9f;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: center;
+            text-shadow: 0 0 8px #00ff9f;
+            letter-spacing: 2px;
+        }
+
+        .info-value {
+            color: #fff;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 0 0 10px #fff;
+        }
+
+        .lives-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .life-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #ff00ff, #ff0080);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.9); }
+        }
+
+        .items-legend {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.1) 0%, rgba(0, 184, 255, 0.1) 100%);
+            border: 2px solid #ff00ff;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.7;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+        }
+
+        .items-legend h3 {
+            color: #ff00ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 8px #ff00ff;
+            text-align: center;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            padding: 2px 0;
+        }
+
+        .item-name {
+            color: #00b8ff;
+            font-weight: bold;
+        }
+
+        .item-desc {
+            color: #ddd;
+        }
+
+        .item-good {
+            color: #00ff9f;
+        }
+
+        .item-bad {
+            color: #ff4757;
+        }
+
+        .controls {
+            background: linear-gradient(135deg, rgba(0, 184, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+            border: 2px solid #00b8ff;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.8;
+            box-shadow: 0 0 15px rgba(0, 184, 255, 0.4);
+        }
+
+        .controls h3 {
+            color: #00b8ff;
+            margin-bottom: 8px;
+            text-shadow: 0 0 8px #00b8ff;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .control-item {
+            color: #fff;
+            margin: 4px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .control-key {
+            color: #00ff9f;
+            font-weight: bold;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #00ff9f 0%, #00b8ff 100%);
+            border: 2px solid #fff;
+            color: #000;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 255, 159, 0.6);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+        }
+
+        .button:hover {
+            background: linear-gradient(135deg, #00b8ff 0%, #ff00ff 100%);
+            box-shadow: 0 0 30px rgba(0, 184, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
+            border-radius: 5px;
+        }
+
+        .game-over-overlay.show {
+            display: flex;
+        }
+
+        .game-over-text {
+            font-size: 52px;
+            background: linear-gradient(45deg, #ff00ff, #ff0080);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            text-shadow: 0 0 30px #ff00ff;
+            margin-bottom: 20px;
+            animation: pulseGlow 1s infinite;
+        }
+
+        .level-complete-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
+            border-radius: 5px;
+        }
+
+        .level-complete-overlay.show {
+            display: flex;
+        }
+
+        .level-complete-text {
+            font-size: 48px;
+            background: linear-gradient(45deg, #00ff9f, #00b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            margin-bottom: 15px;
+            animation: pulseGlow 1s infinite;
+        }
+
+        .restart-text {
+            font-size: 18px;
+            color: #00b8ff;
+            text-shadow: 0 0 10px #00b8ff;
+            letter-spacing: 2px;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="game-title">ARKANOID</div>
+            <div class="game-subtitle">- CLASSIC ARCADE -</div>
+        </div>
+
+        <div class="game-content">
+            <div class="game-board-container">
+                <canvas id="gameCanvas" width="600" height="700"></canvas>
+
+                <div class="game-over-overlay" id="gameOverOverlay">
+                    <div class="game-over-text">GAME OVER</div>
+                    <div class="restart-text">SPACE 키를 눌러 다시 시작</div>
+                </div>
+
+                <div class="level-complete-overlay" id="levelCompleteOverlay">
+                    <div class="level-complete-text">STAGE CLEAR!</div>
+                    <div class="restart-text">다음 스테이지로...</div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="info-box">
+                    <div class="info-title">SCORE</div>
+                    <div class="info-value" id="score">0</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-title">LEVEL</div>
+                    <div class="info-value" id="level">1</div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-title">LIVES</div>
+                    <div class="lives-display" id="livesDisplay">
+                        <div class="life-icon"></div>
+                        <div class="life-icon"></div>
+                        <div class="life-icon"></div>
+                    </div>
+                </div>
+
+                <div class="items-legend">
+                    <h3>아이템</h3>
+                    <div class="item-row"><span class="item-name item-good">[E]</span><span class="item-desc">패들 확장</span></div>
+                    <div class="item-row"><span class="item-name item-bad">[S]</span><span class="item-desc">패들 축소</span></div>
+                    <div class="item-row"><span class="item-name item-good">[L]</span><span class="item-desc">레이저</span></div>
+                    <div class="item-row"><span class="item-name item-good">[M]</span><span class="item-desc">멀티볼</span></div>
+                    <div class="item-row"><span class="item-name item-bad">[F]</span><span class="item-desc">속도증가</span></div>
+                    <div class="item-row"><span class="item-name item-good">[B]</span><span class="item-desc">공 추가</span></div>
+                    <div class="item-row"><span class="item-name item-good">[P]</span><span class="item-desc">생명 +1</span></div>
+                    <div class="item-row"><span class="item-name item-bad">[D]</span><span class="item-desc">즉사</span></div>
+                    <div class="item-row"><span class="item-name item-good">[C]</span><span class="item-desc">공 캐치</span></div>
+                </div>
+
+                <div class="controls">
+                    <h3>조작법</h3>
+                    <div class="control-item">
+                        <span class="control-key">←/→</span>
+                        <span>패들 이동</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">SPACE</span>
+                        <span>공 발사</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">P</span>
+                        <span>일시정지</span>
+                    </div>
+                </div>
+
+                <button class="button" onclick="game.restart()">새 게임</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 게임 상수
+        const CANVAS_WIDTH = 600;
+        const CANVAS_HEIGHT = 700;
+        const PADDLE_WIDTH = 100;
+        const PADDLE_HEIGHT = 15;
+        const BALL_RADIUS = 8;
+        const BRICK_ROWS = 8;
+        const BRICK_COLS = 10;
+        const BRICK_WIDTH = 55;
+        const BRICK_HEIGHT = 20;
+        const BRICK_PADDING = 5;
+        const BRICK_OFFSET_TOP = 60;
+        const BRICK_OFFSET_LEFT = 17.5;
+
+        // 벽돌 색상 및 점수
+        const BRICK_COLORS = [
+            { color: '#FF0080', hits: 1, points: 60 },  // 보라-핑크
+            { color: '#00B8FF', hits: 1, points: 50 },  // 파랑
+            { color: '#00FF9F', hits: 1, points: 40 },  // 민트
+            { color: '#FFD700', hits: 1, points: 30 },  // 금색
+            { color: '#FF6B35', hits: 1, points: 20 },  // 주황
+            { color: '#FF0055', hits: 1, points: 10 },  // 빨강
+            { color: '#C0C0C0', hits: 2, points: 100 }, // 실버 (2타)
+            { color: '#FFD700', hits: 0, points: 0 }    // 골드 (불파괴)
+        ];
+
+        // 아이템 정의
+        const ITEMS = {
+            EXPAND: { letter: 'E', color: '#00B8FF', effect: 'expand' },
+            SHRINK: { letter: 'S', color: '#FF4757', effect: 'shrink' },
+            LASER: { letter: 'L', color: '#FF6B35', effect: 'laser' },
+            MULTI: { letter: 'M', color: '#00FF9F', effect: 'multi' },
+            FAST: { letter: 'F', color: '#FF00FF', effect: 'fast' },
+            BALL: { letter: 'B', color: '#00D9FF', effect: 'ball' },
+            PLAYER: { letter: 'P', color: '#FF0080', effect: 'life' },
+            DEATH: { letter: 'D', color: '#000000', effect: 'death' },
+            CATCH: { letter: 'C', color: '#FFD700', effect: 'catch' }
+        };
+
+        class Breakout {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                this.init();
+            }
+
+            init() {
+                this.paddle = {
+                    x: CANVAS_WIDTH / 2 - PADDLE_WIDTH / 2,
+                    y: CANVAS_HEIGHT - 40,
+                    width: PADDLE_WIDTH,
+                    height: PADDLE_HEIGHT,
+                    speed: 8,
+                    dx: 0
+                };
+
+                this.balls = [{
+                    x: CANVAS_WIDTH / 2,
+                    y: this.paddle.y - BALL_RADIUS,
+                    dx: 0,
+                    dy: 0,
+                    speed: 5,
+                    radius: BALL_RADIUS,
+                    stuck: true
+                }];
+
+                this.bricks = [];
+                this.items = [];
+                this.lasers = [];
+                this.particles = [];
+
+                this.score = 0;
+                this.level = 1;
+                this.lives = 3;
+                this.gameOver = false;
+                this.isPaused = false;
+
+                this.hasLaser = false;
+                this.hasCatch = false;
+                this.laserCooldown = 0;
+
+                this.keys = {};
+
+                this.createBricks();
+                this.setupControls();
+                this.updateDisplay();
+                this.animate();
+            }
+
+            createBricks() {
+                this.bricks = [];
+                for (let row = 0; row < BRICK_ROWS; row++) {
+                    for (let col = 0; col < BRICK_COLS; col++) {
+                        // 레벨에 따라 벽돌 패턴 변경
+                        let typeIndex;
+                        if (this.level === 1) {
+                            typeIndex = Math.floor(row / 2) % 6;
+                        } else if (this.level === 2) {
+                            typeIndex = (row + col) % 7;
+                        } else {
+                            typeIndex = Math.floor(Math.random() * 8);
+                        }
+
+                        const type = BRICK_COLORS[typeIndex];
+                        this.bricks.push({
+                            x: col * (BRICK_WIDTH + BRICK_PADDING) + BRICK_OFFSET_LEFT,
+                            y: row * (BRICK_HEIGHT + BRICK_PADDING) + BRICK_OFFSET_TOP,
+                            width: BRICK_WIDTH,
+                            height: BRICK_HEIGHT,
+                            hits: type.hits,
+                            maxHits: type.hits,
+                            color: type.color,
+                            points: type.points,
+                            visible: true
+                        });
+                    }
+                }
+            }
+
+            setupControls() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+
+                    if (this.gameOver && e.code === 'Space') {
+                        this.restart();
+                        return;
+                    }
+
+                    if (e.code === 'Space' && !this.gameOver && !this.isPaused) {
+                        e.preventDefault();
+                        // 공 발사
+                        this.balls.forEach(ball => {
+                            if (ball.stuck) {
+                                ball.stuck = false;
+                                ball.dx = (Math.random() - 0.5) * 4;
+                                ball.dy = -ball.speed;
+                            }
+                        });
+
+                        // 레이저 발사
+                        if (this.hasLaser && this.laserCooldown <= 0) {
+                            this.shootLaser();
+                            this.laserCooldown = 20;
+                        }
+                    }
+
+                    if (e.code === 'KeyP') {
+                        e.preventDefault();
+                        this.isPaused = !this.isPaused;
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+            }
+
+            shootLaser() {
+                const laserWidth = 4;
+                const laserHeight = 15;
+                this.lasers.push({
+                    x: this.paddle.x + this.paddle.width / 2 - laserWidth / 2 - 15,
+                    y: this.paddle.y,
+                    width: laserWidth,
+                    height: laserHeight,
+                    speed: 10
+                });
+                this.lasers.push({
+                    x: this.paddle.x + this.paddle.width / 2 - laserWidth / 2 + 15,
+                    y: this.paddle.y,
+                    width: laserWidth,
+                    height: laserHeight,
+                    speed: 10
+                });
+            }
+
+            update() {
+                if (this.gameOver || this.isPaused) return;
+
+                // 패들 이동
+                if (this.keys['ArrowLeft'] && this.paddle.x > 0) {
+                    this.paddle.x -= this.paddle.speed;
+                }
+                if (this.keys['ArrowRight'] && this.paddle.x < CANVAS_WIDTH - this.paddle.width) {
+                    this.paddle.x += this.paddle.speed;
+                }
+
+                // 레이저 쿨다운
+                if (this.laserCooldown > 0) {
+                    this.laserCooldown--;
+                }
+
+                // 공 업데이트
+                this.balls.forEach((ball, ballIndex) => {
+                    if (ball.stuck) {
+                        ball.x = this.paddle.x + this.paddle.width / 2;
+                        ball.y = this.paddle.y - ball.radius;
+                    } else {
+                        ball.x += ball.dx;
+                        ball.y += ball.dy;
+
+                        // 벽 충돌
+                        if (ball.x - ball.radius < 0 || ball.x + ball.radius > CANVAS_WIDTH) {
+                            ball.dx = -ball.dx;
+                        }
+                        if (ball.y - ball.radius < 0) {
+                            ball.dy = -ball.dy;
+                        }
+
+                        // 패들 충돌
+                        if (ball.y + ball.radius > this.paddle.y &&
+                            ball.y - ball.radius < this.paddle.y + this.paddle.height &&
+                            ball.x > this.paddle.x &&
+                            ball.x < this.paddle.x + this.paddle.width) {
+
+                            if (this.hasCatch) {
+                                ball.stuck = true;
+                                ball.dx = 0;
+                                ball.dy = 0;
+                            } else {
+                                ball.dy = -Math.abs(ball.dy);
+                                // 패들 위치에 따라 각도 조정
+                                const hitPos = (ball.x - this.paddle.x) / this.paddle.width;
+                                ball.dx = (hitPos - 0.5) * 8;
+                            }
+                        }
+
+                        // 바닥 충돌
+                        if (ball.y + ball.radius > CANVAS_HEIGHT) {
+                            this.balls.splice(ballIndex, 1);
+                            if (this.balls.length === 0) {
+                                this.loseLife();
+                            }
+                        }
+
+                        // 벽돌 충돌
+                        this.bricks.forEach((brick, brickIndex) => {
+                            if (brick.visible && brick.hits > 0) {
+                                if (ball.x > brick.x &&
+                                    ball.x < brick.x + brick.width &&
+                                    ball.y + ball.radius > brick.y &&
+                                    ball.y - ball.radius < brick.y + brick.height) {
+
+                                    ball.dy = -ball.dy;
+                                    brick.hits--;
+
+                                    if (brick.hits <= 0) {
+                                        brick.visible = false;
+                                        this.score += brick.points;
+                                        this.createParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color);
+
+                                        // 아이템 드롭 (15% 확률)
+                                        if (Math.random() < 0.15) {
+                                            this.dropItem(brick.x + brick.width / 2, brick.y + brick.height / 2);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // 레이저 업데이트
+                this.lasers.forEach((laser, index) => {
+                    laser.y -= laser.speed;
+
+                    if (laser.y < 0) {
+                        this.lasers.splice(index, 1);
+                        return;
+                    }
+
+                    // 레이저-벽돌 충돌
+                    this.bricks.forEach(brick => {
+                        if (brick.visible && brick.hits > 0) {
+                            if (laser.x > brick.x &&
+                                laser.x < brick.x + brick.width &&
+                                laser.y > brick.y &&
+                                laser.y < brick.y + brick.height) {
+
+                                brick.hits--;
+                                this.lasers.splice(index, 1);
+
+                                if (brick.hits <= 0) {
+                                    brick.visible = false;
+                                    this.score += brick.points;
+                                    this.createParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color);
+
+                                    if (Math.random() < 0.15) {
+                                        this.dropItem(brick.x + brick.width / 2, brick.y + brick.height / 2);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+
+                // 아이템 업데이트
+                this.items.forEach((item, index) => {
+                    item.y += 2;
+
+                    if (item.y > CANVAS_HEIGHT) {
+                        this.items.splice(index, 1);
+                        return;
+                    }
+
+                    // 패들과 충돌 확인
+                    if (item.y + 10 > this.paddle.y &&
+                        item.y < this.paddle.y + this.paddle.height &&
+                        item.x + 15 > this.paddle.x &&
+                        item.x < this.paddle.x + this.paddle.width) {
+
+                        this.applyItemEffect(item.type);
+                        this.items.splice(index, 1);
+                    }
+                });
+
+                // 파티클 업데이트
+                this.particles.forEach((particle, index) => {
+                    particle.x += particle.dx;
+                    particle.y += particle.dy;
+                    particle.life--;
+
+                    if (particle.life <= 0) {
+                        this.particles.splice(index, 1);
+                    }
+                });
+
+                // 레벨 클리어 확인
+                const remainingBricks = this.bricks.filter(b => b.visible && b.hits > 0).length;
+                if (remainingBricks === 0) {
+                    this.levelComplete();
+                }
+
+                this.updateDisplay();
+            }
+
+            dropItem(x, y) {
+                const itemTypes = Object.values(ITEMS);
+                const itemType = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+
+                this.items.push({
+                    x: x - 15,
+                    y: y,
+                    width: 30,
+                    height: 20,
+                    type: itemType
+                });
+            }
+
+            applyItemEffect(item) {
+                switch(item.effect) {
+                    case 'expand':
+                        this.paddle.width = Math.min(this.paddle.width + 30, 180);
+                        break;
+                    case 'shrink':
+                        this.paddle.width = Math.max(this.paddle.width - 30, 50);
+                        break;
+                    case 'laser':
+                        this.hasLaser = true;
+                        setTimeout(() => { this.hasLaser = false; }, 10000);
+                        break;
+                    case 'multi':
+                        const ball = this.balls[0];
+                        if (ball && !ball.stuck) {
+                            for (let i = 0; i < 2; i++) {
+                                this.balls.push({
+                                    x: ball.x,
+                                    y: ball.y,
+                                    dx: (Math.random() - 0.5) * 6,
+                                    dy: -ball.speed,
+                                    speed: ball.speed,
+                                    radius: ball.radius,
+                                    stuck: false
+                                });
+                            }
+                        }
+                        break;
+                    case 'fast':
+                        this.balls.forEach(ball => {
+                            ball.speed += 1;
+                            ball.dx *= 1.2;
+                            ball.dy *= 1.2;
+                        });
+                        break;
+                    case 'ball':
+                        this.balls.push({
+                            x: this.paddle.x + this.paddle.width / 2,
+                            y: this.paddle.y - BALL_RADIUS,
+                            dx: 0,
+                            dy: 0,
+                            speed: 5,
+                            radius: BALL_RADIUS,
+                            stuck: true
+                        });
+                        break;
+                    case 'life':
+                        this.lives = Math.min(this.lives + 1, 5);
+                        break;
+                    case 'death':
+                        this.loseLife();
+                        break;
+                    case 'catch':
+                        this.hasCatch = true;
+                        setTimeout(() => { this.hasCatch = false; }, 15000);
+                        break;
+                }
+            }
+
+            createParticles(x, y, color) {
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        dx: (Math.random() - 0.5) * 4,
+                        dy: (Math.random() - 0.5) * 4,
+                        color: color,
+                        size: Math.random() * 4 + 2,
+                        life: 30
+                    });
+                }
+            }
+
+            loseLife() {
+                this.lives--;
+                if (this.lives <= 0) {
+                    this.endGame();
+                } else {
+                    this.balls = [{
+                        x: CANVAS_WIDTH / 2,
+                        y: this.paddle.y - BALL_RADIUS,
+                        dx: 0,
+                        dy: 0,
+                        speed: 5,
+                        radius: BALL_RADIUS,
+                        stuck: true
+                    }];
+                    this.paddle.width = PADDLE_WIDTH;
+                    this.hasLaser = false;
+                    this.hasCatch = false;
+                }
+            }
+
+            levelComplete() {
+                document.getElementById('levelCompleteOverlay').classList.add('show');
+                setTimeout(() => {
+                    this.level++;
+                    this.createBricks();
+                    this.balls = [{
+                        x: CANVAS_WIDTH / 2,
+                        y: this.paddle.y - BALL_RADIUS,
+                        dx: 0,
+                        dy: 0,
+                        speed: 5 + this.level * 0.5,
+                        radius: BALL_RADIUS,
+                        stuck: true
+                    }];
+                    this.paddle.x = CANVAS_WIDTH / 2 - PADDLE_WIDTH / 2;
+                    this.paddle.width = PADDLE_WIDTH;
+                    this.items = [];
+                    this.lasers = [];
+                    this.hasLaser = false;
+                    this.hasCatch = false;
+                    document.getElementById('levelCompleteOverlay').classList.remove('show');
+                }, 2000);
+            }
+
+            endGame() {
+                this.gameOver = true;
+                document.getElementById('gameOverOverlay').classList.add('show');
+            }
+
+            restart() {
+                document.getElementById('gameOverOverlay').classList.remove('show');
+                document.getElementById('levelCompleteOverlay').classList.remove('show');
+                this.init();
+            }
+
+            draw() {
+                // 배경
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                // 벽돌
+                this.bricks.forEach(brick => {
+                    if (brick.visible) {
+                        this.ctx.fillStyle = brick.color;
+                        this.ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+
+                        // 글로우 효과
+                        this.ctx.shadowBlur = 15;
+                        this.ctx.shadowColor = brick.color;
+                        this.ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+                        this.ctx.shadowBlur = 0;
+
+                        // 테두리
+                        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
+
+                        // 히트 표시
+                        if (brick.maxHits > 1) {
+                            this.ctx.fillStyle = '#fff';
+                            this.ctx.font = 'bold 12px Courier New';
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillText(brick.hits, brick.x + brick.width / 2, brick.y + brick.height / 2 + 4);
+                        }
+                    }
+                });
+
+                // 패들
+                const gradient = this.ctx.createLinearGradient(
+                    this.paddle.x,
+                    this.paddle.y,
+                    this.paddle.x + this.paddle.width,
+                    this.paddle.y
+                );
+                gradient.addColorStop(0, '#00ff9f');
+                gradient.addColorStop(0.5, '#00b8ff');
+                gradient.addColorStop(1, '#ff00ff');
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowColor = '#00ff9f';
+                this.ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+                this.ctx.shadowBlur = 0;
+
+                // 레이저 표시
+                if (this.hasLaser) {
+                    this.ctx.fillStyle = '#FF6B35';
+                    this.ctx.fillRect(this.paddle.x + 10, this.paddle.y - 5, 5, 8);
+                    this.ctx.fillRect(this.paddle.x + this.paddle.width - 15, this.paddle.y - 5, 5, 8);
+                }
+
+                // 공
+                this.balls.forEach(ball => {
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.beginPath();
+                    this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.shadowColor = '#fff';
+                    this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                });
+
+                // 레이저
+                this.lasers.forEach(laser => {
+                    this.ctx.fillStyle = '#FF6B35';
+                    this.ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.shadowColor = '#FF6B35';
+                    this.ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+                    this.ctx.shadowBlur = 0;
+                });
+
+                // 아이템
+                this.items.forEach(item => {
+                    this.ctx.fillStyle = item.type.color;
+                    this.ctx.fillRect(item.x, item.y, item.width, item.height);
+
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = item.type.color;
+                    this.ctx.fillRect(item.x, item.y, item.width, item.height);
+                    this.ctx.shadowBlur = 0;
+
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = 'bold 14px Courier New';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(item.type.letter, item.x + 15, item.y + 14);
+                });
+
+                // 파티클
+                this.particles.forEach(particle => {
+                    this.ctx.fillStyle = particle.color;
+                    this.ctx.globalAlpha = particle.life / 30;
+                    this.ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+                    this.ctx.globalAlpha = 1;
+                });
+            }
+
+            updateDisplay() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('level').textContent = this.level;
+
+                const livesDisplay = document.getElementById('livesDisplay');
+                livesDisplay.innerHTML = '';
+                for (let i = 0; i < this.lives; i++) {
+                    const lifeIcon = document.createElement('div');
+                    lifeIcon.className = 'life-icon';
+                    livesDisplay.appendChild(lifeIcon);
+                }
+            }
+
+            animate() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // 게임 시작
+        const game = new Breakout();
+    </script>
+</body>
+</html>
