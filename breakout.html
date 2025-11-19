@@ -471,7 +471,7 @@
                     y: this.paddle.y - BALL_RADIUS,
                     dx: 0,
                     dy: 0,
-                    speed: 5,
+                    speed: 3.5,
                     radius: BALL_RADIUS,
                     stuck: true
                 }];
@@ -544,7 +544,7 @@
                         this.balls.forEach(ball => {
                             if (ball.stuck) {
                                 ball.stuck = false;
-                                ball.dx = (Math.random() - 0.5) * 4;
+                                ball.dx = (Math.random() - 0.5) * 3;
                                 ball.dy = -ball.speed;
                             }
                         });
@@ -633,7 +633,7 @@
                                 ball.dy = -Math.abs(ball.dy);
                                 // 패들 위치에 따라 각도 조정
                                 const hitPos = (ball.x - this.paddle.x) / this.paddle.width;
-                                ball.dx = (hitPos - 0.5) * 8;
+                                ball.dx = (hitPos - 0.5) * 5;
                             }
                         }
 
@@ -778,7 +778,7 @@
                                 this.balls.push({
                                     x: ball.x,
                                     y: ball.y,
-                                    dx: (Math.random() - 0.5) * 6,
+                                    dx: (Math.random() - 0.5) * 4,
                                     dy: -ball.speed,
                                     speed: ball.speed,
                                     radius: ball.radius,
@@ -800,7 +800,7 @@
                             y: this.paddle.y - BALL_RADIUS,
                             dx: 0,
                             dy: 0,
-                            speed: 5,
+                            speed: 3.5,
                             radius: BALL_RADIUS,
                             stuck: true
                         });
@@ -842,7 +842,7 @@
                         y: this.paddle.y - BALL_RADIUS,
                         dx: 0,
                         dy: 0,
-                        speed: 5,
+                        speed: 3.5,
                         radius: BALL_RADIUS,
                         stuck: true
                     }];
@@ -862,7 +862,7 @@
                         y: this.paddle.y - BALL_RADIUS,
                         dx: 0,
                         dy: 0,
-                        speed: 5 + this.level * 0.5,
+                        speed: 3.5 + this.level * 0.3,
                         radius: BALL_RADIUS,
                         stuck: true
                     }];
