@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>테트리스 - TETRIS</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
@@ -12,43 +14,75 @@
         }
 
         body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: 'Courier New', monospace;
+            font-family: 'Poppins', sans-serif;
             color: #fff;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(252, 70, 107, 0.3) 0%, transparent 50%);
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-50px, -50px) rotate(180deg); }
         }
 
         .game-container {
-            background: #0f0f23;
-            border: 4px solid #ff6b6b;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 0 30px rgba(255, 107, 107, 0.5),
-                        inset 0 0 20px rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .game-container:hover {
+            transform: translateY(-5px);
         }
 
         .game-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
         .game-title {
-            font-size: 48px;
-            font-weight: bold;
-            color: #ff6b6b;
-            text-shadow: 0 0 10px #ff6b6b,
-                         0 0 20px #ff6b6b,
-                         0 0 30px #ff6b6b;
-            letter-spacing: 10px;
+            font-size: 56px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #f093fb 50%, #fff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 12px;
             margin-bottom: 10px;
+            filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3));
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3)); }
+            50% { filter: drop-shadow(0 4px 20px rgba(240, 147, 251, 0.6)); }
         }
 
         .game-content {
             display: flex;
-            gap: 20px;
+            gap: 30px;
         }
 
         .game-board-container {
@@ -56,10 +90,10 @@
         }
 
         #gameCanvas {
-            border: 3px solid #4ecdc4;
-            box-shadow: 0 0 20px rgba(78, 205, 196, 0.5),
-                        inset 0 0 10px rgba(0, 0, 0, 0.8);
-            background: #000;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(20, 20, 40, 0.95) 0%, rgba(30, 30, 50, 0.95) 100%);
             image-rendering: pixelated;
         }
 
@@ -67,65 +101,91 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            min-width: 200px;
+            min-width: 220px;
         }
 
         .info-box {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid #4ecdc4;
-            border-radius: 5px;
-            padding: 15px;
-            box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .info-box:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.3);
         }
 
         .info-title {
-            color: #4ecdc4;
-            font-size: 18px;
-            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 600;
             margin-bottom: 10px;
             text-align: center;
-            text-shadow: 0 0 5px #4ecdc4;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .info-value {
             color: #fff;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 32px;
+            font-weight: 700;
             text-align: center;
-            text-shadow: 0 0 5px #fff;
+            background: linear-gradient(135deg, #fff 0%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         #nextCanvas {
-            border: 2px solid #4ecdc4;
-            background: #000;
+            background: linear-gradient(135deg, rgba(20, 20, 40, 0.6) 0%, rgba(30, 30, 50, 0.6) 100%);
+            border-radius: 15px;
             margin: 10px auto;
             display: block;
-            box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .controls {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid #ff6b6b;
-            border-radius: 5px;
-            padding: 15px;
-            font-size: 12px;
-            line-height: 1.8;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 13px;
+            line-height: 2;
         }
 
         .controls h3 {
-            color: #ff6b6b;
-            margin-bottom: 10px;
-            text-shadow: 0 0 5px #ff6b6b;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .control-item {
-            color: #fff;
-            margin: 5px 0;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .control-key {
-            color: #4ecdc4;
-            font-weight: bold;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 11px;
+            color: #f093fb;
+            min-width: 60px;
+            text-align: center;
+            border: 1px solid rgba(240, 147, 251, 0.3);
         }
 
         .game-over-overlay {
@@ -134,59 +194,73 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
             display: none;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             z-index: 10;
+            border-radius: 20px;
         }
 
         .game-over-overlay.show {
             display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .game-over-text {
-            font-size: 48px;
-            color: #ff6b6b;
-            font-weight: bold;
-            text-shadow: 0 0 20px #ff6b6b;
+            font-size: 56px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 20px;
-            animation: pulse 1s infinite;
+            animation: pulse 1.5s ease-in-out infinite;
         }
 
         .restart-text {
-            font-size: 20px;
-            color: #4ecdc4;
-            text-shadow: 0 0 10px #4ecdc4;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
         }
 
         .button {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-            border: 2px solid #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
             color: #fff;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 5px;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 15px;
             cursor: pointer;
             margin-top: 10px;
-            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-            font-family: 'Courier New', monospace;
+            box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.4);
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .button:hover {
-            background: linear-gradient(135deg, #ee5a6f 0%, #ff6b6b 100%);
-            box-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            box-shadow: 0 6px 20px 0 rgba(102, 126, 234, 0.6);
+            transform: translateY(-2px);
         }
 
         .button:active {
-            transform: scale(0.95);
+            transform: translateY(0) scale(0.98);
         }
     </style>
 </head>
@@ -247,13 +321,13 @@
         const BLOCK_SIZE = 30;
         const COLORS = [
             null,
-            '#FF0D72', // I - 밝은 핑크
-            '#0DC2FF', // J - 밝은 청록
-            '#FF971C', // L - 주황
-            '#FFD700', // O - 금색
-            '#0FFF50', // S - 네온 그린
-            '#F538FF', // T - 보라
-            '#FF3F3F'  // Z - 빨강
+            '#00D9FF', // I - 시안
+            '#667EEA', // J - 퍼플 블루
+            '#FF6B9D', // L - 핑크
+            '#FFC93C', // O - 골드
+            '#00E5A0', // S - 민트
+            '#C471ED', // T - 라벤더
+            '#FF5E78'  // Z - 코랄
         ];
 
         // 테트로미노 모양 정의
@@ -442,30 +516,61 @@
             }
 
             drawBlock(ctx, x, y, color, size = BLOCK_SIZE) {
-                ctx.fillStyle = color;
-                ctx.fillRect(x * size, y * size, size, size);
+                const px = x * size;
+                const py = y * size;
 
-                // 3D 효과
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x * size, y * size, size, size);
+                // 그라데이션 배경
+                const gradient = ctx.createLinearGradient(px, py, px + size, py + size);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, this.adjustBrightness(color, -20));
 
-                // 하이라이트
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                ctx.fillRect(x * size, y * size, size / 4, size / 4);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(px, py, size, size);
 
-                // 그림자
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(x * size + size * 0.75, y * size + size * 0.75, size / 4, size / 4);
+                // 부드러운 테두리
+                ctx.strokeStyle = this.adjustBrightness(color, 30);
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(px + 0.5, py + 0.5, size - 1, size - 1);
+
+                // 내부 하이라이트
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(px + 2, py + 2, size - 4, size - 4);
+
+                // 상단 하이라이트
+                const highlightGradient = ctx.createLinearGradient(px, py, px, py + size / 2);
+                highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+                highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = highlightGradient;
+                ctx.fillRect(px + 1, py + 1, size - 2, size / 2 - 1);
+
+                // 하단 그림자
+                const shadowGradient = ctx.createLinearGradient(px, py + size / 2, px, py + size);
+                shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+                shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+                ctx.fillStyle = shadowGradient;
+                ctx.fillRect(px + 1, py + size / 2, size - 2, size / 2 - 1);
+            }
+
+            adjustBrightness(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+                const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+                const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+                return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
             }
 
             draw() {
-                // 배경 그리기
-                this.ctx.fillStyle = '#000';
+                // 배경 그리기 (그라데이션)
+                const bgGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                bgGradient.addColorStop(0, 'rgba(20, 20, 40, 0.95)');
+                bgGradient.addColorStop(1, 'rgba(30, 30, 50, 0.95)');
+                this.ctx.fillStyle = bgGradient;
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-                // 그리드 그리기
-                this.ctx.strokeStyle = 'rgba(78, 205, 196, 0.1)';
+                // 그리드 그리기 (더 부드럽게)
+                this.ctx.strokeStyle = 'rgba(102, 126, 234, 0.08)';
                 this.ctx.lineWidth = 1;
                 for (let i = 0; i <= COLS; i++) {
                     this.ctx.beginPath();
@@ -520,24 +625,32 @@
                 }
                 ghost.y--;
 
-                this.ctx.globalAlpha = 0.2;
+                // 고스트 블록을 더 세련된 아웃라인으로 표시
                 for (let y = 0; y < ghost.shape.length; y++) {
                     for (let x = 0; x < ghost.shape[y].length; x++) {
                         if (ghost.shape[y][x]) {
-                            this.drawBlock(
-                                this.ctx,
-                                ghost.x + x,
-                                ghost.y + y,
-                                COLORS[ghost.color]
-                            );
+                            const px = (ghost.x + x) * BLOCK_SIZE;
+                            const py = (ghost.y + y) * BLOCK_SIZE;
+
+                            // 반투명 채우기
+                            this.ctx.fillStyle = COLORS[ghost.color] + '20';
+                            this.ctx.fillRect(px, py, BLOCK_SIZE, BLOCK_SIZE);
+
+                            // 밝은 테두리
+                            this.ctx.strokeStyle = COLORS[ghost.color] + '60';
+                            this.ctx.lineWidth = 2;
+                            this.ctx.strokeRect(px + 1, py + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
                         }
                     }
                 }
-                this.ctx.globalAlpha = 1;
             }
 
             drawNext() {
-                this.nextCtx.fillStyle = '#000';
+                // 그라데이션 배경
+                const bgGradient = this.nextCtx.createLinearGradient(0, 0, 0, this.nextCanvas.height);
+                bgGradient.addColorStop(0, 'rgba(20, 20, 40, 0.6)');
+                bgGradient.addColorStop(1, 'rgba(30, 30, 50, 0.6)');
+                this.nextCtx.fillStyle = bgGradient;
                 this.nextCtx.fillRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
 
                 if (this.nextPiece) {
