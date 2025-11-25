@@ -442,7 +442,7 @@
                 icon: '🔥',
                 desc: '가장 가까운 적에게 발사',
                 maxLevel: 8,
-                cooldown: 60,
+                cooldown: 30,  // 발사 속도 2배 증가 (60 → 30)
                 update: function(weapon) {
                     weapon.timer++;
                     if (weapon.timer >= weapon.cooldown) {
@@ -681,10 +681,10 @@
             projectiles.push({
                 x: player.x,
                 y: player.y,
-                vx: (dx / dist) * 8,
-                vy: (dy / dist) * 8,
-                size: 8,
-                damage: 30,
+                vx: (dx / dist) * 10,  // 발사체 속도 증가 (8 → 10)
+                vy: (dy / dist) * 10,
+                size: 10,  // 크기 증가 (8 → 10)
+                damage: 50,  // 데미지 대폭 증가 (30 → 50)
                 color: '#ff6600',
                 life: 100
             });
@@ -832,14 +832,14 @@
                 name: weaponDef.name,
                 icon: weaponDef.icon,
                 level: 1,
-                damage: 20,
+                damage: 35,  // 초기 데미지 증가 (20 → 35)
                 timer: 0,
                 cooldown: weaponDef.cooldown || 0,
                 // 오빗 전용
                 angle: weapons.length * (Math.PI / 2),
                 radius: 60 + weapons.length * 20,
-                size: 15,
-                speed: 0.05,
+                size: 20,  // 초기 크기 증가 (15 → 20)
+                speed: 0.07,  // 회전 속도 증가 (0.05 → 0.07)
                 maxLevel: weaponDef.maxLevel
             };
             weapons.push(weapon);
@@ -1051,8 +1051,10 @@
             particles = [];
             weapons.length = 0;
 
-            // 시작 무기
-            addWeapon('orbit');
+            // 시작 무기 (초반 난이도 조정)
+            addWeapon('orbit');  // 회전하는 마법서 1
+            addWeapon('orbit');  // 회전하는 마법서 2
+            addWeapon('fireball');  // 화염구
 
             document.getElementById('timer').textContent = '00:00';
             document.getElementById('level').textContent = '1';
