@@ -29,6 +29,14 @@ except ImportError:
         sys.exit(1)
 
 
+# ============================================
+# 기본 저장 경로 설정 (여기서 변경 가능)
+# ============================================
+DEFAULT_SAVE_PATH = r"D:\_Users\MyHome\Downloads"
+DEFAULT_FILENAME = "merged_output.xlsx"
+# ============================================
+
+
 class ExcelMergerApp:
     def __init__(self, root):
         self.root = root
@@ -37,6 +45,11 @@ class ExcelMergerApp:
         self.root.resizable(True, True)
 
         self.file_list = []
+
+        # 기본 저장 경로 설정
+        self.save_path = DEFAULT_SAVE_PATH
+        if not os.path.exists(self.save_path):
+            self.save_path = os.path.expanduser("~/Downloads")
 
         self.setup_ui()
 
@@ -80,6 +93,16 @@ class ExcelMergerApp:
         ttk.Button(btn_frame, text="선택 삭제", command=self.remove_selected).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="전체 삭제", command=self.clear_all).pack(side=tk.LEFT, padx=2)
 
+        # 저장 경로 표시 프레임
+        save_frame = ttk.LabelFrame(main_frame, text="저장 위치", padding="5")
+        save_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.save_path_var = tk.StringVar(value=self.save_path)
+        save_path_label = ttk.Label(save_frame, textvariable=self.save_path_var, foreground="blue")
+        save_path_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        ttk.Button(save_frame, text="변경", command=self.change_save_path, width=6).pack(side=tk.RIGHT)
+
         # 실행 버튼
         self.merge_btn = ttk.Button(
             main_frame,
@@ -122,6 +145,16 @@ class ExcelMergerApp:
         self.listbox.delete(0, tk.END)
         self.file_list.clear()
         self.status_var.set("파일을 추가해주세요.")
+
+    def change_save_path(self):
+        """저장 경로 변경"""
+        new_path = filedialog.askdirectory(
+            title="저장 폴더 선택",
+            initialdir=self.save_path
+        )
+        if new_path:
+            self.save_path = new_path
+            self.save_path_var.set(new_path)
 
     def extract_section_name(self, filename):
         """파일명에서 구간명 추출"""
@@ -249,16 +282,14 @@ class ExcelMergerApp:
             messagebox.showwarning("경고", "파일을 먼저 추가해주세요.")
             return
 
-        # 저장 위치 선택
-        output_file = filedialog.asksaveasfilename(
-            title="저장할 파일명",
-            defaultextension=".xlsx",
-            filetypes=[("Excel files", "*.xlsx")],
-            initialfile="merged_output.xlsx"
-        )
+        # 자동 저장 경로 생성 (타임스탬프로 중복 방지)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"merged_{timestamp}.xlsx"
+        output_file = os.path.join(self.save_path, filename)
 
-        if not output_file:
-            return
+        # 폴더가 없으면 생성
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
 
         self.merge_btn.config(state='disabled')
         self.progress['value'] = 0
